@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@netlify/sdk": "^0.3.5",
+    "csvtojson": "^2.0.10",
     "gatsby-sharp": "^1.11.0",
     "typescript": "^5.1.6"
   },

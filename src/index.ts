@@ -1,6 +1,7 @@
 import { NetlifyIntegration } from "@netlify/sdk";
 import MovieAPI from "./api/movies/movieDbHelper";
-
+const csvFilePath = "./UserData.csv";
+import csv from "csvtojson";
 const integration = new NetlifyIntegration();
 
 const connector = integration.createConnector({
@@ -8,6 +9,22 @@ const connector = integration.createConnector({
 });
 
 connector.model(async ({ define }) => {
+  define.nodeModel({
+    name: `User`,
+    description: `A general User Object`,
+    fields: {
+      firstname: {
+        type: `String`,
+      },
+      secondname: {
+        type: `String`,
+      },
+      email: {
+        type: `String`,
+      },
+    },
+  });
+
   define.nodeModel({
     name: `Movie`,
     description: `A general Movie Object`,
@@ -44,7 +61,13 @@ const sourceMovies = async () => {
   return top20Movies;
 };
 
+const sourceUserData = async () => {
+  const jsonArray = await csv().fromFile(csvFilePath);
+  return jsonArray;
+};
+
 connector.event(`createAllNodes`, async ({ models }) => {
+  const users = await sourceUserData();
   const movies = await sourceMovies();
   movies.results.forEach((movie) => {
     models.Movie.create({
@@ -57,9 +80,19 @@ connector.event(`createAllNodes`, async ({ models }) => {
       backdropPath: movie.backdrop_path,
     });
   });
+
+  users.forEach((user) => {
+    models.User.create({
+      id: user.id,
+      firstname: user.firstname,
+      secondname: user.secondname,
+      email: user.email,
+    });
+  });
 });
 
 connector.event(`updateNodes`, async ({ models }) => {
+  const users = await sourceUserData();
   const movies = await sourceMovies();
   movies.results.forEach((movie) => {
     models.Movie.create({
@@ -70,6 +103,15 @@ connector.event(`updateNodes`, async ({ models }) => {
       popularity: movie.popularity,
       posterPath: movie.poster_path,
       backdropPath: movie.backdrop_path,
+    });
+  });
+
+  users.forEach((user) => {
+    models.User.create({
+      id: user.id,
+      firstname: user.firstname,
+      secondname: user.secondname,
+      email: user.email,
     });
   });
 });
